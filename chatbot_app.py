@@ -1,11 +1,17 @@
-
+# chatbot_app.py
 import random
 import streamlit as st
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import make_pipeline
 
-# Intent definitions
+try:
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.pipeline import make_pipeline
+except ModuleNotFoundError as e:
+    st.error(f"Required module not found: {e.name}")
+    st.markdown("Please add the following to your `requirements.txt` file:")
+    st.code("streamlit\nscikit-learn\nnumpy", language="text")
+    st.stop()
+
 intents = {
     "intents": [
         {"tag": "greeting", "patterns": ["Hi", "Hello", "Hey", "Good morning"], "responses": ["Hello!", "Hi there!", "Greetings!"]},
@@ -15,31 +21,28 @@ intents = {
     ]
 }
 
-# Prepare training data
 X_train, y_train = [], []
 for intent in intents["intents"]:
     for pattern in intent["patterns"]:
         X_train.append(pattern)
         y_train.append(intent["tag"])
 
-# Train model
 model = make_pipeline(TfidfVectorizer(), LogisticRegression())
 model.fit(X_train, y_train)
 
-# Chatbot response function
 def get_response(user_input):
     intent = model.predict([user_input])[0]
     for i in intents["intents"]:
         if i["tag"] == intent:
             return random.choice(i["responses"])
 
-# Streamlit UI
 st.set_page_config(page_title="Smart Chatbot", page_icon="🤖")
 st.title("🤖 Smart Customer Support Chatbot")
-st.write("Ask me something!")
+st.write("Ask me anything!")
 
 user_input = st.text_input("You:", placeholder="Type your message here...")
 
 if user_input:
     response = get_response(user_input)
     st.text_area("Bot:", value=response, height=100, max_chars=None, key=None)
+
